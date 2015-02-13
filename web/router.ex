@@ -12,7 +12,7 @@ defmodule ElixirRailsWebsockets.Router do
 
   end
 
-  socket "/ws", ElixirRailsWebsockets do
+  socket "/", ElixirRailsWebsockets do
     channel "*", ProxyChannel
   end
 

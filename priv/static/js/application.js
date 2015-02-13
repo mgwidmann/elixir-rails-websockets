@@ -3,7 +3,7 @@ var join = function(timeout, url){
   if(socket) {
     socket.close();
   }
-  socket = new Phoenix.Socket("/ws");
+  socket = new Phoenix.Socket("/");
   socket.join(timeout, url, function(channel) {
 
     channel.on("data:update", function(message) {

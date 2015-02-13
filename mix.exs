@@ -23,7 +23,7 @@ defmodule ElixirRailsWebsockets.Mixfile do
   # Type `mix help deps` for examples and options
   defp deps do
     [
-      {:phoenix, "~> 0.8.0"},
+      {:phoenix, github: "mgwidmann/phoenix", branch: "headers_in_sockets"},
       {:cowboy, "~> 1.0"},
       {:httpoison, "~> 0.5"},
       # Test

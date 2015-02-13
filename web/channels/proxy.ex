@@ -8,11 +8,12 @@ defmodule ElixirRailsWebsockets.ProxyChannel do
   @timeout_start 100
   @timeout_end   86400000
   @timeout_range @timeout_start..@timeout_end
+  @header_exclusions ["connection", "upgrade"]
 
   def join(timeout, url, socket) do
     case check_timeout(timeout) do
       {:integer, timeout_int} ->
-        proxy(url, socket, String.to_integer(timeout))
+        proxy(url, filter_headers(socket.conn.req_headers), socket, String.to_integer(timeout))
         {:ok, socket}
       :other ->
         {:error, socket, "Not a valid integer within #{@timeout_start}..#{@timeout_end}ms : #{timeout}"}
@@ -27,16 +28,33 @@ defmodule ElixirRailsWebsockets.ProxyChannel do
     end
   end
 
-  def proxy(url, socket, timeout) do
+  def filter_headers(headers) do
+    _filter_headers(headers, [])
+  end
+
+  defp _filter_headers([], filtered) do
+    Enum.reverse(filtered)
+  end
+
+  defp _filter_headers([{key, _val} = header | rest], filtered) when key in @header_exclusions do
+    _filter_headers(rest, filtered)
+  end
+
+  defp _filter_headers([header | rest], filtered) do
+    _filter_headers(rest, [header | filtered])
+  end
+
+  def proxy(url, headers, socket, timeout) do
     url
-    |> initialize_socket(socket)
+    |> initialize_socket(headers, socket)
     |> setup_interval(timeout)
     |> reply_with_initial_data
   end
 
-  def initialize_socket(url, socket) do
+  def initialize_socket(url, headers, socket) do
     Phoenix.Socket.assign(socket, @url, url)
-    |> Phoenix.Socket.assign(@data, get(url))
+    |> Phoenix.Socket.assign(:headers, headers)
+    |> Phoenix.Socket.assign(@data, get(url, headers))
   end
 
   def reply_with_initial_data(socket) do
@@ -51,9 +69,9 @@ defmodule ElixirRailsWebsockets.ProxyChannel do
     socket
   end
 
-  def get(url) do
-    case HTTPoison.get(url) do
-      {:ok, %HTTPoison.Response{status_code: code, body: body}} when code in [200, 301] ->
+  def get(url, headers) do
+    case HTTPoison.get(url, headers) do
+      {:ok, %HTTPoison.Response{status_code: code, body: body}} when code in [200, 301, 302] ->
         parse(body)
       {:ok, %HTTPoison.Response{status_code: 404}} ->
         %{error: "Not found: #{url}"}
@@ -86,7 +104,7 @@ defmodule ElixirRailsWebsockets.ProxyChannel do
       receive do
         :check ->
           Logger.debug "#{inspect self} Checking #{socket.assigns[@url]}"
-          data = get(socket.assigns[@url])
+          data = get(socket.assigns[@url], socket.assigns[:headers])
           unless data == socket.assigns[@data] do
             Logger.debug "#{inspect self} Data has changed"
             reply(socket, @data_update, data)

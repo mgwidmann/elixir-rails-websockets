@@ -7,7 +7,7 @@
   "idna": {:hex, :idna, "1.0.1"},
   "meck": {:hex, :meck, "0.8.2"},
   "mock": {:hex, :mock, "0.1.0"},
-  "phoenix": {:hex, :phoenix, "0.8.0"},
-  "plug": {:hex, :plug, "0.9.0"},
-  "poison": {:hex, :poison, "1.3.0"},
+  "phoenix": {:git, "git://github.com/mgwidmann/phoenix.git", "64d2342a655bd7a177f277972961aa004ff89bde", [branch: "headers_in_sockets"]},
+  "plug": {:hex, :plug, "0.10.0"},
+  "poison": {:hex, :poison, "1.3.1"},
   "ranch": {:hex, :ranch, "1.0.0"}}
